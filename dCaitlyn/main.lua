@@ -1,16 +1,14 @@
-local version = "1.0"
+local version = 1.0
+
+local updater = module.load("dCaitlyn", "updater")
+--Auto update dCaitlyn
+updater.davidev_update("dCaitlyn", version, hanbot.luapath)
+
+
 local avada_lib = module.lib("avada_lib")
 if not avada_lib then
 	console.set_color(12)
 	print("You need to have Avada Lib in your community_libs folder to run 'dCaitlyn'!")
-	print("You can find it here:")
-	console.set_color(11)
-	print("https://git.soontm.net/avada/avada_lib/archive/master.zip")
-	console.set_color(15)
-	return
-elseif avada_lib.version < 1 then
-	console.set_color(12)
-	print("Your need to have Avada Lib updated to run 'dCaitlyn'!")
 	print("You can find it here:")
 	console.set_color(11)
 	print("https://git.soontm.net/avada/avada_lib/archive/master.zip")
@@ -31,16 +29,12 @@ local spellQ = {
 	delay = 0.625,
 	speed = 2200,
 	width = 90,
-	boundingRadiusMod = 1,
+	boundingRadiusMod = 0,
 	collision = { hero = false, minion = false }
 }
 
 local spellW = {
-	range = 800,
-	width = 100,
-	speed = 3200,
-	delay = 1.1,
-	boundingRadiusMod = 1
+	range = 800
 }
 
 local spellE = {
@@ -48,7 +42,8 @@ local spellE = {
 	delay = 0.125,
 	speed = 1600,
 	width = 90,
-	boundingRadiusMod = 1
+	boundingRadiusMod = 0,
+	collision = { hero = true, minion = true }
 }
 
 local rRange = { 2000, 2500, 3000 }
