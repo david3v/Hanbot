@@ -1,4 +1,5 @@
-local version = 1.1
+local version = 1.2
+
 
 local updater = module.load("dCaitlyn", "updater")
 --Auto update dCaitlyn
@@ -296,6 +297,11 @@ local function OnTick()
 	end
 end
 
+cb.add(cb.draw, function()
+if updater.update then
+graphics.draw_text_2D("dCaitlyn is updated. Press Reload or 2x F9", 28, 100 , 50, graphics.argb(255, 255, 153, 51))
+end
+end)
 cb.add(cb.spell, OnSpell)
 cb.add(cb.tick, OnTick)
 orb.combat.register_f_after_attack(function()

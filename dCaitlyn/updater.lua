@@ -11,6 +11,8 @@
 local json = module.load("dCaitlyn", "json")
 
 local updater = {}
+
+updater.update = false
 updater.error = function(str)
 	console.set_color(004)
 	print("[DD Update ERROR] " .. tostring(str))
@@ -78,7 +80,7 @@ updater.davidev_update = function(script_name, local_version, cpath_x)
 		updater.print("You already have the latest version [" .. local_version .. "] @ " .. script_name)
 		return
 	end
-	
+	updater.update = true
 	updater.print("Downloading update [" .. local_version .. " => " .. remote_version .. "]")
 	
 	
