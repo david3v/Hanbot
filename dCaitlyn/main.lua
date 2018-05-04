@@ -1,4 +1,4 @@
-local version = 1.0
+local version = 1.1
 
 local updater = module.load("dCaitlyn", "updater")
 --Auto update dCaitlyn
