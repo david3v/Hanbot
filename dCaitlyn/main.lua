@@ -1,4 +1,4 @@
-local version = 1.2
+local version = 1.3
 
 
 local updater = module.load("dCaitlyn", "updater")
@@ -229,7 +229,7 @@ local function OnSpell(spell)
 		end
 	end
 	
-	if orb.menu.lane_clear:get() and spell.owner.team == TEAM_ENEMY and spell.owner.type == TYPE_HERO and common.IsValidTarget(spell.owner) then
+	if (orb.menu.lane_clear:get() or orb.menu.hybrid:get() ) and spell.owner.team == TEAM_ENEMY and spell.owner.type == TYPE_HERO and common.IsValidTarget(spell.owner) then
 		if menu.harass["SafeQHarass"]:get() and common.GetPercentMana(player) > menu.harass["SafeQHarassMana"]:get() and GetEnemyHeroesInRange(800, player) == 0 then
 			local pos31 = preds.linear.get_prediction(spellQ, spell.owner)
 			if pos31 then
