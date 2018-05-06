@@ -1,4 +1,4 @@
-local version = 1.3
+local version = tonumber(io.open(hanbot.luapath .. '/dCaitlyn/version', 'r'):read('*a'))
 
 
 local updater = module.load("dCaitlyn", "updater")
@@ -164,7 +164,7 @@ local function Combo()
 				then
 				local pos = preds.linear.get_prediction(spellQ, enemy)
 				if pos then
-						local poss = vec3(pos.endPos.x, mousePos.y, pos.endPos.y)
+						local poss = vec3(pos.endPos.x, target.pos.y, pos.endPos.y)
 						player:castSpell("pos", 0, poss)
 					end
 			end
@@ -186,7 +186,7 @@ local function Combo()
 			if player:spellSlot(2).level > 0 and menu.combo["EWhenClose"]:get() and flDistance < 300 then
 				local pos2 = preds.linear.get_prediction(spellE, enemy)
 				if pos2 then
-					local ppos = vec3(pos2.endPos.x, mousePos.y, pos2.endPos.y)
+					local ppos = vec3(pos2.endPos.x, target.pos.y, pos2.endPos.y)
 					player:castSpell("pos", 2, ppos)
 					ComboTarget = enemy
 					UseNetCombo = true
@@ -233,7 +233,7 @@ local function OnSpell(spell)
 		if menu.harass["SafeQHarass"]:get() and common.GetPercentMana(player) > menu.harass["SafeQHarassMana"]:get() and GetEnemyHeroesInRange(800, player) == 0 then
 			local pos31 = preds.linear.get_prediction(spellQ, spell.owner)
 			if pos31 then
-				local posss = vec3(pos31.endPos.x, mousePos.y, pos31.endPos.y)
+				local posss = vec3(pos31.endPos.x, spell.owner.pos.y, pos31.endPos.y)
 				player:castSpell("pos", 0, posss)
 			end
 		end
@@ -249,7 +249,7 @@ local function OnSpell(spell)
 				
 				local pos = preds.linear.get_prediction(spellQ, target)
 				if pos then
-					local poss = vec3(pos.endPos.x, mousePos.y, pos.endPos.y)
+					local poss = vec3(pos.endPos.x, target.pos.y, pos.endPos.y)
 					player:castSpell("pos", 0, poss)
 				end
 			end
@@ -289,7 +289,7 @@ local function OnTick()
 		
 		local pos2 = preds.linear.get_prediction(spellE, target)
 		if pos2 then
-			local ppos = vec3(pos2.endPos.x, mousePos.y, pos2.endPos.y)
+			local ppos = vec3(pos2.endPos.x, target.pos.y, pos2.endPos.y)
 			player:castSpell("pos", 2, ppos)
 			ComboTarget = target
 			UseNetCombo = true
@@ -312,7 +312,7 @@ orb.combat.register_f_after_attack(function()
 					
 	if orb.menu.combat:get() and target.type == TYPE_HERO and common.IsValidTarget(target) then
 		if player.levelRef <= menu.combo.EBeforeLevel:get() and pos2 then
-			local ppos = vec3(pos2.endPos.x, mousePos.y, pos2.endPos.y)
+			local ppos = vec3(pos2.endPos.x, target.pos.y, pos2.endPos.y)
 			player:castSpell("pos", 2, ppos)
 			UseNetCombo = true
             ComboTarget = target
