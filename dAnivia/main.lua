@@ -33,8 +33,7 @@ local spellQ = {
 	delay = 0.25,
 	speed = 850,
 	width = 125,
-	boundingRadiusMod = 0,
-	collision = { hero = true, minion = false }
+	boundingRadiusMod = 0
 }
 
 local spellW = {
