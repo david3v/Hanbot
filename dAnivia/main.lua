@@ -332,7 +332,7 @@ end
 
 local function LogicE()
 	local t = GetTargetE()
-	if common.IsValidTarget(t) and t.type == TYPE_HERO and player.pos:dist(t.pos) < spellE.range) then
+	if common.IsValidTarget(t) and t.type == TYPE_HERO and player.pos:dist(t.pos) < spellE.range then
 		local qCd = player:spellSlot(0).cooldown
 		local eCd = player:spellSlot(2).cooldown
 		local rCd = player:spellSlot(3).cooldown
