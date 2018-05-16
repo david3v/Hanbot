@@ -4,9 +4,9 @@ return {
     flag = {
       text = "dAnivia",
       color = {
-        text = 0xFFEDD7E6,
-        background1 = 0xFFFF69B4,
-        background2 = 0x59000000,
+        text = 0xFF00BB4F,
+        background1 = 0x66AAFFFF,
+        background2 = 0x99000000,
       }
     },
     load = function()

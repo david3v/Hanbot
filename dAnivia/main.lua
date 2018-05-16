@@ -210,16 +210,19 @@ end
 local function LogicQ()
 	local t = GetTargetQ()
 	
+	if t == nil then return end
+
+
 	if common.IsValidTarget(t) then
 		if orb.menu.combat:get() and player.mana > EMANA + QMANA - 10 then
 			local pos = preds.linear.get_prediction(spellQ, t)
-			if pos then
+			if pos and pos.startPos:dist(pos.endPos) <= spellQ.range then
 				local poss = vec3(pos.endPos.x, t.pos.y, pos.endPos.y)
 				player:castSpell("pos", 0, poss)
 			end
 		elseif Harass and menu.q.harassQ:get() and menu.harass["harass"..t.charName]:get() and player.mana > RMANA + EMANA + QMANA + WMANA and not UnderTurret() then			
 			local pos2 = preds.linear.get_prediction(spellQ, t)
-			if pos2 then
+			if pos2 and pos2.startPos:dist(pos2.endPos) <= spellQ.range then
 				local poss2 = vec3(pos2.endPos.x, t.pos.y, pos2.endPos.y)
 				player:castSpell("pos", 0, poss2)
 			end
@@ -228,13 +231,13 @@ local function LogicQ()
 			local eDmg = dmglib.GetSpellDamage(2,t)
 			if qDmg > common.GetShieldedHealth("AP", t) then
 				local pos22 = preds.linear.get_prediction(spellQ, t)
-				if pos22 then
+				if pos22 and pos22.startPos:dist(pos22.endPos) <= spellQ.range then
 					local poss22 = vec3(pos22.endPos.x, t.pos.y, pos22.endPos.y)
 					player:castSpell("pos", 0, poss22)
 				end
 			elseif qDmg + eDmg > common.GetShieldedHealth("AP", t) and player.mana > QMANA + EMANA then
 				local pos222 = preds.linear.get_prediction(spellQ, t)
-				if pos222 then
+				if pos222 and pos222.startPos:dist(pos222.endPos) <= spellQ.range then
 					local poss2222 = vec3(pos222.endPos.x, t.pos.y, pos222.endPos.y)
 					player:castSpell("pos", 0, poss2222)
 				end
@@ -244,6 +247,7 @@ local function LogicQ()
 			for i = 0, objManager.enemies_n - 1 do
 				local enemy = objManager.enemies[i]
 				if common.IsValidTarget(enemy) and enemy.pos:dist(player.pos) <= spellQ.range and not common.CanPlayerMove(enemy) then
+					print("555555");
 					player:castSpell("pos", 0 , vec3(enemy.pos.x,player.pos.y,enemy.pos.y))
 				end
 			end
