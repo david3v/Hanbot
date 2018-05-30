@@ -24,85 +24,74 @@ local orb = module.internal("orb")
 local common = avada_lib.common
 local dmglib = avada_lib.damageLib
 
+
+local QCastTime,WCastTime = 0
+
 --spell
 local spellQ = {
-	range = 1250,
-	delay = 0.625,
-	speed = 2200,
-	width = 90,
-	boundingRadiusMod = 0,
-	collision = { hero = false, minion = false }
+	speed = 2200, range = 1250, delay = 0.625, width = 90, boundingRadiusMod = 0
 }
 
 local spellW = {
-	range = 800
+	speed = math.huge, range = 800, delay = 0.25, radius = 75, boundingRadiusMod = 0 
 }
 
 local spellE = {
-	range = 750,
-	delay = 0.125,
-	speed = 1600,
-	width = 90,
-	boundingRadiusMod = 0,
-	collision = { hero = true, minion = true }
+	speed = 1500, range = 750, delay = 0.25, width = 60, boundingRadiusMod = 0, collision = {minion = true, wall = true }
 }
 
 local rRange = { 2000, 2500, 3000 }
 
 --spell
 
-local ComboTrap = false
-local UseNet = false
-local UseNetCombo = false
-local LastTrapTime = os.clock()
+local Harass, None
 
-local ComboTrap  = false
-local UseNet = false
-local UseNetCombo = false 
-local LastTrapTime = 0
-local ComboTarget = nil
-
-
-
+local Spells = { ["katarinar"] = true,["drain"] = true,["consume"] = true,["absolutezero"] = true, ["staticfield"] = true,["reapthewhirlwind"] = true,["jinxw"] = true,["jinxr"] = true,["shenstandunited"] = true,["threshe"] = true,["threshrpenta"] = true,["threshq"] = true,["meditate"] = true,["caitlynpiltoverpeacemaker"] = true, ["volibearqattack"] = true,
+["cassiopeiapetrifyinggaze"] = true,["ezrealtrueshotbarrage"] = true,["galioidolofdurand"] = true,["luxmalicecannon"] = true, ["missfortunebullettime"] = true,["infiniteduress"] = true,["alzaharnethergrasp"] = true,["lucianq"] = true,["velkozr"] = true,["rocketgrabmissile"] = true
+ }
 --menu
 
 local menu = menu("davidevCaitlyn", "dCaitlyn")
-menu:menu("combo", "Combo")
-menu.combo:boolean("QInCombo","Use Q in Combo",true)
-menu.combo:boolean("SafeQKS","Safe Q KS",true)
-menu.combo:slider("ShortQDisableLevel", "Disable Short-Q after level", 11, 0, 18, 1)
-menu.combo:boolean("WAfterE","Use W in Burst Combo",true)
-menu.combo:dropdown("TrapEnemyCast", "Use W on Enemy AA/Spellcast", 1, { "Exact Position", "Vector Extension", "Turn Off" })
-menu.combo:boolean("TrapImmobileCombo","Use W on Immobile Enemies",true)
-menu.combo:slider("EBeforeLevel", "Disable Long-E After Level", 18, 0, 18, 1)
-menu.combo:boolean("EWhenClose","Use E on Gapcloser/Close Enemy",true)
-menu.combo:keybind("SemiManualEMenuKey", "E Semi-Manual Key",  "G", nil)
-menu.combo:boolean("RInCombo","Use R in Combo",true)
-menu.combo:keybind("SemiManualRMenuKey", "R Semi-Manual Key",  "T", nil)
-menu.combo:slider("UltRange", "Dont R if Enemies in Range", 1100, 0, 3000, 1)
-menu.combo:boolean("EnemyToBlockR","Dont R if an Enemy Can Block",false)
-
-menu:menu("harass", "Harass")
-menu.harass:boolean("SafeQHarass", "Use Q Smart Harass", true)
-menu.harass:slider("SafeQHarassMana", "Q Harass Above Mana Percent", 60 , 0 , 100, 1)
-menu.harass:dropdown("TrapEnemyCastHarass", "Use W on Enemy AA/Spellcast", 1, { "Exact Position", "Vector Extension", "Turn Off" })
-
-menu:menu("extra", "Extra Settings")
-menu.extra:slider("WDelay", "Minimum Delay Between Traps (W)", 2, 0, 15, 1)
+menu:menu("q", "Q Config")
+menu.q:boolean("autoQ2","Auto Q",true)
+menu.q:boolean("autoQ","Reduce Q",true)
+menu.q:boolean("Qaoe","Q aoe",true)
+menu.q:boolean("Qslow","Q slow",true)
+menu:menu("w", "W Config")
+menu.w:boolean("comboW", "Auto W on combo", false)
+menu.w:boolean("autoW", "Auto W on hard CC", true)
+menu.w:boolean("telE", "Auto W teleport, zhonya and other object", true)
+menu.w:boolean("Wspell", "W on special spell detection", true)
+menu.w:menu("wgap", "W Gap Closer")
+menu.w.wgap:dropdown("WmodeGC", "Gap Closer position mode", 1, { "Dash end position", "My hero position" })
+menu.w.wgap:menu("castEnemy", "Cast on enemy: ")
+local enemies = common.GetEnemyHeroes()
+for i, enemy in ipairs(enemies) do
+	menu.w.wgap.castEnemy:boolean("WGCchampion"..enemy.charName, enemy.charName, true)
+end
+menu:menu("e", "E Config")
+menu.e:boolean("autoE", "Auto E", true)
+menu.e:boolean("Ehitchance", "Auto E dash target", true)
+menu.e:boolean("harrasEQ", "TRY E + Q", true)
+menu.e:boolean("EQks", "Ks E + Q + AA", true)
+menu.e:keybind("useE", "Dash E HotKeySmartcast", "T", nil)
+menu.e:menu("egap", "E Gap Closer")
+menu.e.egap:dropdown("EmodeGC", "Gap Closer position mode", 3, { "Dash end position", "Cursor position", "Enemy position" })
+menu.e.egap:menu("castEnemy", "Cast on enemy: ")
+local enemies = common.GetEnemyHeroes()
+for i, enemy in ipairs(enemies) do
+	menu.e.egap.castEnemy:boolean("EGCchampion"..enemy.charName, enemy.charName, true)
+end
+menu:menu("r", "R Config")
+menu.r:boolean("autoR", "Auto R KS", true)
+menu.r:slider("Rcol", "R collision width [400]", 400, 1, 1000, 1)
+menu.r:slider("Rrange", "R minimum range [1000]", 1100, 1 , 2000, 1)
+menu.r:keybind("useR", "Semi-maanual cast R key", "R", nil)
+menu.r:boolean("Rturrent", "Don't R under enemy turret", true)
+menu:boolean("harassHybrid", "Spell-harass only in hybrid mode", false)
+menu:boolean("manaDisable", "Disable mana manager in combo", false)
 
 --menu
-TS.load_to_menu(menu)
-local TargetSelection = function(res, obj, dist)
-	if dist < spellQ.range then
-		res.obj = obj
-		return true
-	end
-end
-
-local GetTarget = function()
-	return TS.get_result(TargetSelection).obj
-end
-
 local TargetSelectionR = function(res, obj, dist)
 	if dist < rRange[player:spellSlot(3).level] then
 		res.obj = obj
@@ -112,6 +101,17 @@ end
 
 local GetTargetR = function()
 	return TS.get_result(TargetSelectionR).obj
+end
+
+local TargetSelection = function(res, obj, dist)
+	if dist < spellQ.range then
+		res.obj = obj
+		return true
+	end
+end
+
+local GetTarget = function()
+	return TS.get_result(TargetSelection).obj
 end
 
 local TargetSelectionE = function(res, obj, dist)
@@ -125,176 +125,380 @@ local GetTargetE = function()
 	return TS.get_result(TargetSelectionE).obj
 end
 
-local function GetAllyHeroesInRange(range, pos)
-  local pos = pos or player
-  local count = 0
-  local allies = common.GetAllyHeroes()
-  for i = 1, #allies do
-    local hero = allies[i]
-    if common.IsValidTarget(hero) and hero.pos:distSqr(pos) < range * range then
-      count = count + 1
-    end
-  end
-  return count
-end
 
-local function GetEnemyHeroesInRange(range, pos)
-  local pos = pos or player
-  local count = 0
-  local enemies = common.GetEnemyHeroes()
-  for i = 1, #enemies do
-    local hero = enemies[i]
-    if common.IsValidTarget(hero) and hero.pos:distSqr(pos) < range * range then
-      count = count + 1
-    end
-  end
-  return count
-end
-
-
-
-local function Combo()
-	for i = 0, objManager.enemies_n - 1 do
-		local enemy = objManager.enemies[i]
-		local flDistance = (enemy.pos - player.pos):len()
-		
-		if enemy == nil then return end
-		if common.IsValidTarget(enemy) then
-			if player:spellSlot(0).level > 0 and menu.combo["SafeQKS"]:get() and flDistance > 675 and GetEnemyHeroesInRange(650,player.pos) == 0 and (dmglib.GetSpellDamage(0,enemy) - enemy.healthRegenRate) > common.GetShieldedHealth("AD", enemy)
-				then
-				local pos = preds.linear.get_prediction(spellQ, enemy)
-				if pos then
-						local poss = vec3(pos.endPos.x, target.pos.y, pos.endPos.y)
-						player:castSpell("pos", 0, poss)
-					end
-			end
-			if player:spellSlot(3).level > 0 and menu.combo["RInCombo"]:get() and flDistance < rRange[player:spellSlot(3).level] and flDistance > menu.combo["UltRange"]:get() and (dmglib.GetSpellDamage(3,enemy) - enemy.healthRegenRate) > common.GetShieldedHealth("AD", enemy) and GetEnemyHeroesInRange(menu.combo["UltRange"]:get(),player.pos) == 0
-			then
-				if menu.combo["EnemyToBlockR"]:get() and GetAllyHeroesInRange(550,enemy.pos) > 0 then
-				    return
-				end
-				player:castSpell("obj", 3, enemy)
-				
-			end
-			if player:spellSlot(1).level > 0 and  menu.combo["TrapImmobileCombo"]:get() and flDistance < spellW.range and (common.HasBuffType(enemy, 11) or common.HasBuffType(enemy, 5) or common.HasBuffType(enemy, 24) or common.HasBuffType(enemy, 29) ) then
-				if os.clock() - LastTrapTime > menu.extra["WDelay"]:get() then
-					player:castSpell("obj", 1, enemy)
-					LastTrapTime = os.clock()
-					return
-				end
-			end
-			if player:spellSlot(2).level > 0 and menu.combo["EWhenClose"]:get() and flDistance < 300 then
-				local pos2 = preds.linear.get_prediction(spellE, enemy)
-				if pos2 then
-					local ppos = vec3(pos2.endPos.x, target.pos.y, pos2.endPos.y)
-					player:castSpell("pos", 2, ppos)
-					ComboTarget = enemy
-					UseNetCombo = true
-				end
-				
-			end
-		end
-
+local function SetMana()
+	if (menu.manaDisable:get() and orb.menu.combat:get()) or common.GetPercentHealth() < 20 then
+		QMANA = 0
+		WMANA = 0
+		EMANA = 0
+		RMANA = 0
+		return
 	end
+	
+	QMANA = player.manaCost0
+	WMANA = player.manaCost1
+    EMANA = player.manaCost2
+	
+	if player:spellSlot(3).state ~= 0 then
+	--print(QMANA - player.parRegenRate * player:spellSlot(0).cooldown)
+		RMANA = QMANA - player.parRegenRate * player:spellSlot(0).cooldown
+	else
+		RMANA = player.manaCost3
+	end
+
 end
 
 local function OnSpell(spell)
-	if orb.menu.combat:get() and menu.combo["TrapEnemyCast"]:get() < 3 and spell.owner.team == TEAM_ENEMY and spell.owner.type == TYPE_HERO and common.IsValidTarget(spell.owner) then
-		if os.clock() - LastTrapTime > menu.extra["WDelay"]:get() then
-			if menu.combo["TrapEnemyCast"]:get() == 1 then
-				player:castSpell("obj", 1, spell.owner)
-				LastTrapTime = os.clock()
-				return
-			else
-				local EndPosition = player.pos + (spell.owner.pos - player.pos):norm() * ((spell.owner.pos - player.pos):len() + 50);
-				player:castSpell("pos", 1, EndPosition)
-				LastTrapTime = os.clock()
-				return
-			end
+	if spell and spell.owner == player and (spell.name == "CaitlynPiltoverPeacemaker" or spell.name == "CaitlynEntrapment") then
+		QCastTime = game.time
+	end
+
+	if spell and spell.owner == player and spell.name == "CaitlynYordleTrap" then
+		WCastTime = game.time
+	end
+
+	if player:spellSlot(1).state == 0 and menu.w.Wspell:get() and spell.owner.type == TYPE_HERO and spell.owner.team == TEAM_ENEMY and common.IsValidTarget(spell.owner) and player.pos:dist(spell.owner.pos) < spellW.range then 
+		
+		local ss = Spells[string.lower(spell.name)]
+		if ss then
+			player:castSpell("pos", 1, spell.owner.pos)
+		end
+	end	
+	
+end
+
+local function bonusRange()
+	return 720 + player.boundingRadius
+end
+
+local function GetRealDistance(target)
+	return player.path.serverPos:dist(target.pos) + player.boundingRadius + target.boundingRadius
+end
+
+local function GetRealRange(target)
+	return 680 + player.boundingRadius + target.boundingRadius
+end
+
+local function  IsInRange(source, target, range)
+	return source.path.serverPos2D:distSqr(target.pos2D) < range * range
+end
+
+local function  IsInRangeVec(sourceVec, targetVec, range)
+	return sourceVec:distSqr(targetVec) < range * range
+end
+
+local function IsInAutoAttackRange(target, source)
+	source = source or player
+	return 	IsInRange(source,target, common.GetAARange(target)) and IsInRangeVec(common.GetPredictedPos(source, network.latency ), common.GetPredictedPos(target, network.latency ), common.GetAARange(target)) 
+end
+
+local function UnderTurret(pos)
+	local p = pos or player.pos
+	if common.is_under_tower(p) then
+		return true
+	else 
+		return false
+	end	
+end
+
+local function CastIfItWillHit(minHit)
+local valid = {}
+	for i = 0, objManager.enemies_n - 1 do
+		local enemy = objManager.enemies[i]
+		if enemy and common.IsValidTarget(enemy) then
+		local dist = player.path.serverPos:distSqr(enemy.path.serverPos)
+		if dist <= (spellQ.range * spellQ.range) then
+			valid[#valid + 1] = enemy
+		end
 		end
 	end
-	
-	if orb.menu.hybrid:get() and menu.harass["TrapEnemyCastHarass"]:get() < 3 and spell.owner.team == TEAM_ENEMY and spell.owner.type == TYPE_HERO and common.IsValidTarget(spell.owner) then
-		if os.clock() - LastTrapTime > menu.extra["WDelay"]:get() then
-			if menu.harass["TrapEnemyCastHarass"]:get() == 1 then
-				player:castSpell("obj", 1, spell.owner)
-				LastTrapTime = os.clock()
-				return
-			else
-				local EndPosition = player.pos + (spell.owner.pos - player.pos):norm() * ((spell.owner.pos - player.pos):len() + 50);
-				player:castSpell("pos", 1, EndPosition)
-				LastTrapTime = os.clock()
-				return
+
+local max_count, cast_pos = 0, nil
+	for i = 1, #valid do
+		local enemy_a = valid[i]
+		local current_pos = player.path.serverPos + ((enemy_a.path.serverPos - player.path.serverPos):norm() * (enemy_a.path.serverPos:dist(player.path.serverPos) + spellQ.range))
+		local hit_count = 1
+		for j = 1, #valid do
+			if j ~= i then
+				local enemy_b = valid[j]
+				local point = mathf.closest_vec_line(enemy_b.path.serverPos, player.path.serverPos, current_pos)
+				if point and point:dist(enemy_b.path.serverPos) < (spellQ.width / 2 + enemy_b.boundingRadius) then
+				hit_count = hit_count + 1
+				end
 			end
 		end
-	end
-	
-	if (orb.menu.lane_clear:get() or orb.menu.hybrid:get() ) and spell.owner.team == TEAM_ENEMY and spell.owner.type == TYPE_HERO and common.IsValidTarget(spell.owner) then
-		if menu.harass["SafeQHarass"]:get() and common.GetPercentMana(player) > menu.harass["SafeQHarassMana"]:get() and GetEnemyHeroesInRange(800, player) == 0 then
-			local pos31 = preds.linear.get_prediction(spellQ, spell.owner)
-			if pos31 then
-				local posss = vec3(pos31.endPos.x, spell.owner.pos.y, pos31.endPos.y)
-				player:castSpell("pos", 0, posss)
-			end
+		if not cast_pos or hit_count > max_count then
+		cast_pos, max_count = current_pos, hit_count
 		end
+		if cast_pos and max_count >= minHit then				
+			print("aoe")
+			player:castSpell("pos", 0, cast_pos)
+			orb.core.set_server_pause()
+			break
+		  end
 	end
 	
-	if spell and menu.combo["QInCombo"]:get() and spell.name == "CaitlynHeadshotMissile" and spell.target.type == TYPE_HERO and common.IsValidTarget(spell.target) then
-		local flDistance = (spell.target.pos - player.pos):len();
-		if flDistance < spellQ.range then
-			if flDistance > 650 or player.levelRef < menu.combo["ShortQDisableLevel"]:get() then
-				local target = GetTarget()
-				
-				if target == nil then return end
-				
-				local pos = preds.linear.get_prediction(spellQ, target)
-				if pos then
-					local poss = vec3(pos.endPos.x, target.pos.y, pos.endPos.y)
-					player:castSpell("pos", 0, poss)
+end
+
+local function Gapcloser()	
+	if player.mana > RMANA + WMANA then
+		for i = 0, objManager.enemies_n - 1 do
+			local dasher = objManager.enemies[i]
+			if dasher.type == TYPE_HERO and dasher.team == TEAM_ENEMY then
+				if player:spellSlot(2).state == 0 and dasher and common.IsValidTarget(dasher) and dasher.path.isActive and dasher.path.isDashing and
+				player.pos:dist(dasher.path.point[1]) < spellE.range and menu.e.egap.castEnemy["EGCchampion" .. dasher.charName]:get() then
+					if menu.e.egap.EmodeGC:get() == 1 then
+						player:castSpell("pos", 2, dasher.path.point2D[1])
+					elseif menu.e.egap.EmodeGC:get() == 2 then
+						player:castSpell("pos", 2, game.mousePos)
+					else
+						player:castSpell("pos", 2, dasher.path.serverPos)
+					end
+				elseif player:spellSlot(1).state == 0 and dasher and common.IsValidTarget(dasher) and dasher.path.isActive and dasher.path.isDashing and
+				player.pos:dist(dasher.path.point[1]) < spellW.range and menu.w.wgap.castEnemy["WGCchampion" .. dasher.charName]:get() then
+					if menu.w.wgap.WmodeGC:get() == 1 then
+						player:castSpell("pos", 1, dasher.path.point2D[1])
+					else
+						player:castSpell("pos", 1, player.path.serverPos)
+					end
 				end
 			end
 		end
 	end
-	
-	if spell and menu.combo["WAfterE"]:get() and spell.name == "CaitlynEntrapment" then
-		if ComboTarget ~= nil and common.IsValidTarget(ComboTarget) then
-			local EstimatedEnemyPos = common.GetPredictedPos(ComboTarget, 0.5)
-			if EstimatedEnemyPos then
-				player:castSpell("pos", 1, EstimatedEnemyPos)
-				return
+end
+
+local function LogicQ()
+	local t = GetTarget()
+	if t and common.IsValidTarget(t) then
+		if GetRealDistance(t) > bonusRange() + 80 and not IsInAutoAttackRange(t) and dmglib.GetSpellDamage(0,t) * 0.67 > common.GetShieldedHealth("AD", t) and #common.GetEnemyHeroesInRange(400) == 0 then
+			local pos = preds.linear.get_prediction(spellQ, t)
+			if pos and pos.startPos:dist(pos.endPos) <= spellQ.range then
+				player:castSpell("pos", 0, vec3(pos.endPos.x, t.pos.y, pos.endPos.y))
+			end
+		elseif orb.menu.combat:get() and player.mana > RMANA + QMANA + EMANA + 10 and #common.GetEnemyHeroesInRange(bonusRange() + 100 + t.boundingRadius) == 0 and not menu.q.autoQ:get() then
+			local pos = preds.linear.get_prediction(spellQ, t)
+			if pos and pos.startPos:dist(pos.endPos) <= spellQ.range then
+				player:castSpell("pos", 0, vec3(pos.endPos.x, t.pos.y, pos.endPos.y))
+			end
+		end
+		if (orb.menu.combat:get() or Harass) and player.mana > RMANA + QMANA and #common.GetEnemyHeroesInRange(400) == 0 then
+			local enemies = common.GetEnemyHeroes()
+			for i, enemy in ipairs(enemies) do
+				if common.IsValidTarget(enemy) and IsInRange(player,enemy,spellQ.range) and ( not common.CanPlayerMove(enemy) or enemy.buff["caitlynyordletrapinternal"] ) then
+					player:castSpell("pos", 0, enemy.path.serverPos)				
+				end
+			end
+			if #common.GetEnemyHeroesInRange(bonusRange()) == 0 and not UnderTurret() then
+				if common.HasBuffType(t,10) and menu.q.Qslow:get() then
+					player:castSpell("pos", 0, t.path.serverPos)
+				end
+				if menu.q.Qaoe:get() then
+					CastIfItWillHit(2)			
+				end
 			end
 		end
 	end
 end
-	
+
+local function kek(hero)
+	return hero.buff["rocketgrab2"] or hero.buff["ThreshQ"] or (hero.moveSpeed >= 50 and not common.HasBuffType(hero, 5)
+	and not common.HasBuffType(hero, 21) and not common.HasBuffType(hero, 11) and not common.HasBuffType(hero, 29) and not hero.buff["Recall"] and not common.HasBuffType(hero, 30) and not common.HasBuffType(hero, 22) and not common.HasBuffType(hero, 8) and not common.HasBuffType(hero, 24))
+end
+
+local function kek2(player, hero)
+	local vector = player.path.point[player.path.count]
+	local result
+	if vector == player.pos then
+		result = false
+	else
+		vector2 = hero.path.point[hero.path.count]
+		if vector2 == hero.pos then
+			result = false
+		else
+			local p = vector - player.pos
+			local p2 = vector2 - hero.pos
+			local aci = (p2-p):norm()
+			local num = mathf.angle_between(p,p2,aci)
+			result = num < 20
+		end
+	end
+	return result
+end
+
+local function LogicW()
+	if player.mana > RMANA + WMANA then
+		if menu.w.autoW:get() then
+			local enemies = common.GetEnemyHeroes()
+			for i, enemy in ipairs(enemies) do
+				if common.IsValidTarget(enemy) and IsInRange(player,enemy,spellW.range) and not enemy.buff["caitlynyordletrapdebuff"] and not kek(enemy) and game.time - WCastTime > 2  then
+					player:castSpell("pos", 1, enemy.path.serverPos)			
+				end
+			end
+		end
+		if menu.w.telE:get() then
+			local trapPos			
+			local enemies = common.GetEnemyHeroes()
+			for i, enemy in ipairs(enemies) do		
+				if common.IsValidTarget(enemy) and enemy.pos:dist(player.path.serverPos) < spellW.range and (enemy.buff["zhonyasringshield"] or enemy.buff["BardRStasis"] or common.HasBuffType(enemy, 17) )  then
+					trapPos = enemy.pos		
+				end
+			end
+
+			objManager.loop(function(obj)
+				if obj and obj.pos:dist(player.pos) < spellW.range then
+					name = string.lower(obj.name)			
+					if name:find("gatemarker_red.troy") or name:find("global_ss_teleport_target_red.troy") or name:find("r_indicator_red.troy") then
+						trapPos = obj.pos
+					end
+				end
+			end)
+			if trapPos then
+				player:castSpell("pos", 1, trapPos)
+			end	
+		end		
+
+		if orb.menu.combat:get() and menu.w.comboW:get() and player:spellSlot(1).stacks > 1 then
+			local enemies = common.GetEnemyHeroes()
+			for i, enemy in ipairs(enemies) do		
+				if common.IsValidTarget(enemy) and IsInRange(player,enemy,spellW.range - 100) then
+					if common.HasBuffType(enemy, 10) then
+						local pos = preds.circular.get_prediction(spellW, enemy)
+						if pos and pos.startPos:dist(pos.endPos) <= spellW.range then
+							player:castSpell("pos", 1, vec3(pos.endPos.x, enemy.pos.y, pos.endPos.y))
+						end
+					end
+					if kek2(player,enemy) then
+						local pos = preds.circular.get_prediction(spellW, enemy)
+						if pos and pos.startPos:dist(pos.endPos) <= spellW.range then
+							player:castSpell("pos", 1, vec3(pos.endPos.x, enemy.pos.y, pos.endPos.y))
+						end
+					end
+				end
+			end
+		end
+
+	end
+end
+
+local function Extend(source,target,range)
+	return	source + range * (target - source):norm()
+end
+
+local function LogicE()
+	if menu.e.autoE:get() then
+		local t = GetTargetE()
+		if t and common.IsValidTarget(t) then
+			local positionT = player.path.serverPos - (t.pos - player.path.serverPos)
+			if #common.GetEnemyHeroesInRange(700, Extend(player.pos, positionT, 400)) < 2 then
+				local eDmg = dmglib.GetSpellDamage(2, t)
+				local qDmg = dmglib.GetSpellDamage(0, t) * 0.67
+				if menu.e.EQks:get() and qDmg + eDmg + common.CalculateAADamage(t) > t.health and player.mana > EMANA + QMANA then
+					local pos = preds.linear.get_prediction(spellE, t)
+					if pos and not preds.collision.get_prediction(spellE, pos, t) and pos.startPos:dist(pos.endPos) <= spellE.range then
+						player:castSpell("pos", 2, vec3(pos.endPos.x, t.pos.y, pos.endPos.y))
+					end
+				elseif (Harass or orb.menu.combat:get()) and menu.e.harrasEQ:get() and player.mana > EMANA + QMANA + RMANA then
+					local pos = preds.linear.get_prediction(spellE, t)
+					if pos and not preds.collision.get_prediction(spellE, pos, t) and pos.startPos:dist(pos.endPos) <= spellE.range then
+						player:castSpell("pos", 2, vec3(pos.endPos.x, t.pos.y, pos.endPos.y))
+					end
+				end
+			end
+
+			if player.mana > RMANA + EMANA then
+				if menu.e.Ehitchance:get() and t.path.isActive and t.path.isDashing then
+					local pred_pos = preds.core.lerp(t.path, network.latency + spellE.delay, t.path.dashSpeed)
+					if pred_pos and pred_pos:dist(player.path.serverPos2D) > common.GetAARange() and pred_pos:dist(player.path.serverPos2D) <= spellE.range then
+						player:castSpell("pos", 2, vec3(pred_pos.x, t.y, pred_pos.y))
+					end
+				end
+				if player.health < player.maxHealth * 0.3 then
+					if GetRealDistance(t) < 500 then
+						player:castSpell("pos", 2, t.pos)
+					end
+					if #common.GetEnemyHeroesInRange(250) > 0 then
+						player:castSpell("pos", 2, t.pos)
+					end
+				end
+			end
+
+		end
+	end
+
+	if menu.e.useE:get() then
+		local position = player.path.serverPos - (game.mousePos - player.path.serverPos)
+		player:castSpell("pos", 2, position)
+	end
+end
+
+local function ValidUlt(target)
+	local result
+	if ( common.HasBuffType(target, 16) or common.HasBuffType(target, 15) ) or common.HasBuffType(target, 17)  or common.HasBuffType(target, 4) or not common.IsValidTarget(target) or target.buff["JudicatorIntervention"] or target.buff["UndyingRage"] 
+	or target.buff["ChronoRevive"] or target.buff["ChronoShift"] or target.buff["lissandrarself"] or target.buff["KindredRNoDeathBuff"] or target.buff["malzaharpassiveshield"] or target.buff["BansheesVeil"] or target.buff["SivirShield"]
+	or target.buff["ShroudofDarkness"] or target.buff["BlackShield"] or target.buff["zhonyasringshield"] or target.buff["fioraw"] then
+		result = false
+	else
+		result = true
+	end
+	return result
+end
+
+
+local function LogicR()
+	if (not UnderTurret() or not menu.r.Rturrent:get()) and #common.GetEnemyHeroesInRange(700) == 0 then
+		local enemies = common.GetEnemyHeroes()
+		for i, enemy in ipairs(enemies) do	
+			if common.IsValidTarget(enemy) and IsInRange(player,enemy,rRange[player:spellSlot(3).level]) and player.pos:dist(enemy.pos) > menu.r.Rrange:get() and #common.GetEnemyHeroesInRange(menu.r.Rcol:get(), enemy.pos) == 1 and #common.GetAllyHeroesInRange(600, enemy.pos) == 0 and ValidUlt(enemy) then
+				if dmglib.GetSpellDamage(3, enemy) > enemy.health then
+					player:castSpell("obj", 3, enemy)
+					break
+				end
+			end
+		end
+	end
+end
 
 local function OnTick()
-    if orb.menu.combat:get()
-	then
-		Combo()
+	if player.isRecalling or player.isDead then 
+		return
 	end
-	
-	if menu.combo["SemiManualRMenuKey"]:get() then
+
+	if menu.r.useR:get() then
 		local target = GetTargetR()
-		
-		if target == nil then return end
-		
-		player:castSpell("obj", 3, target)		
+		if target and common.IsValidTarget(target) then
+			player:castSpell("obj", 3, target)
+		end
 	end
 	
-	if menu.combo["SemiManualEMenuKey"]:get() then
-		local target = GetTargetE()
-		
-		if target == nil then return end
-		
-		local pos2 = preds.linear.get_prediction(spellE, target)
-		if pos2 then
-			local ppos = vec3(pos2.endPos.x, target.pos.y, pos2.endPos.y)
-			player:castSpell("pos", 2, ppos)
-			ComboTarget = target
-			UseNetCombo = true
-		end	
+	if menu.harassHybrid:get() then
+		Harass = orb.menu.hybrid:get()
+	else
+		Harass = orb.menu.hybrid:get() or orb.menu.lane_clear:get() or  orb.menu.last_hit:get()
 	end
+
+	SetMana()
+
+	Gapcloser()
+
+	if player:spellSlot(2).state == 0 then			
+		LogicE()
+	end	
+
+	local orbT = orb.combat.target
+	if(orbT and orbT.type == TYPE_HERO) then		
+		if common.CalculateAADamage(orbT) * 2 > orbT.health then return end
+	end
+	if player:spellSlot(1).state == 0 then	
+		LogicW()
+	end
+	if player:spellSlot(0).state == 0 and menu.q.autoQ2:get() then
+		LogicQ()
+	end
+	if player:spellSlot(3).state == 0 and menu.r.autoR:get() and game.time - QCastTime > 2 then
+		LogicR()
+	end
+
+
 end
 
 cb.add(cb.draw, function()
@@ -304,20 +508,3 @@ end
 end)
 cb.add(cb.spell, OnSpell)
 cb.add(cb.tick, OnTick)
-orb.combat.register_f_after_attack(function()
-	if orb.combat.target == nil then return end
-	
-	local target = orb.combat.target
-	local pos2 = preds.linear.get_prediction(spellE, target)
-					
-	if orb.menu.combat:get() and target.type == TYPE_HERO and common.IsValidTarget(target) then
-		if player.levelRef <= menu.combo.EBeforeLevel:get() and pos2 then
-			local ppos = vec3(pos2.endPos.x, target.pos.y, pos2.endPos.y)
-			player:castSpell("pos", 2, ppos)
-			UseNetCombo = true
-            ComboTarget = target
-			return
-		end
-	end
-end
-)
