@@ -25,7 +25,8 @@ local common = avada_lib.common
 local dmglib = avada_lib.damageLib
 
 
-local QCastTime,WCastTime = 0
+local QCastTime = 0
+local WCastTime = 0
 
 --spell
 local spellQ = {
@@ -84,8 +85,8 @@ for i, enemy in ipairs(enemies) do
 end
 menu:menu("r", "R Config")
 menu.r:boolean("autoR", "Auto R KS", true)
-menu.r:slider("Rcol", "R collision width [400]", 400, 1, 1000, 1)
-menu.r:slider("Rrange", "R minimum range [1000]", 1100, 1 , 2000, 1)
+menu.r:slider("UltRange", "Dont R if Enemies in Range", 1100, 0, 3000, 1)
+menu.r:boolean("EnemyToBlockR","Dont R if an Enemy Can Block",true)
 menu.r:keybind("useR", "Semi-maanual cast R key", "R", nil)
 menu.r:boolean("Rturrent", "Don't R under enemy turret", true)
 menu:boolean("harassHybrid", "Spell-harass only in hybrid mode", false)
@@ -443,13 +444,18 @@ local function ValidUlt(target)
 	return result
 end
 
-
 local function LogicR()
 	if (not UnderTurret() or not menu.r.Rturrent:get()) and #common.GetEnemyHeroesInRange(700) == 0 then
 		local enemies = common.GetEnemyHeroes()
 		for i, enemy in ipairs(enemies) do	
-			if common.IsValidTarget(enemy) and IsInRange(player,enemy,rRange[player:spellSlot(3).level]) and player.pos:dist(enemy.pos) > menu.r.Rrange:get() and #common.GetEnemyHeroesInRange(menu.r.Rcol:get(), enemy.pos) == 1 and #common.GetAllyHeroesInRange(600, enemy.pos) == 0 and ValidUlt(enemy) then
-				if dmglib.GetSpellDamage(3, enemy) > enemy.health then
+			local flDistance = (enemy.pos - player.pos):len()
+			if common.IsValidTarget(enemy) and flDistance < rRange[player:spellSlot(3).level] and flDistance > menu.r.UltRange:get() and #common.GetEnemyHeroesInRange(menu.r.UltRange:get()) == 0 and ValidUlt(enemy) then
+				if dmglib.GetSpellDamage(3, enemy) * 0.1 > common.GetShieldedHealth("AD", enemy) then
+					local count,objs = common.CountObjectsNearPos(enemy.pos, 550, enemies, common.IsValidTarget)
+					if menu.r.EnemyToBlockR:get() and count > 1 then
+						return
+					end
+					
 					player:castSpell("obj", 3, enemy)
 					break
 				end
@@ -462,7 +468,7 @@ local function OnTick()
 	if player.isRecalling or player.isDead then 
 		return
 	end
-
+	
 	if menu.r.useR:get() then
 		local target = GetTargetR()
 		if target and common.IsValidTarget(target) then
