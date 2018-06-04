@@ -176,7 +176,7 @@ function GetBuff(target, buffname)
 end
 
 local function SetMana()
-	if (menu.manaDisable:get() and orb.menu.combat:get()) or common.GetPercentHealth() < 20 then
+	if (menu.manaDisable:get() and orb.menu.combat.key:get()) or common.GetPercentHealth() < 20 then
 		QMANA = 0
 		WMANA = 0
 		EMANA = 0
@@ -214,7 +214,7 @@ local function LogicQ()
 
 
 	if common.IsValidTarget(t) then
-		if orb.menu.combat:get() and player.mana > EMANA + QMANA - 10 then
+		if orb.menu.combat.key:get() and player.mana > EMANA + QMANA - 10 then
 			local pos = preds.linear.get_prediction(spellQ, t)
 			if pos and pos.startPos:dist(pos.endPos) <= spellQ.range then
 				local poss = vec3(pos.endPos.x, t.pos.y, pos.endPos.y)
@@ -275,11 +275,11 @@ local function LogicR()
 			elseif player.mana > RMANA + EMANA and dmglib.GetSpellDamage(2,t) * 2 + dmglib.GetSpellDamage(3,t) > common.GetShieldedHealth("AP", t) then
 				player:castSpell("obj", 3, t)
 			end
-			if player.mana > RMANA + EMANA + QMANA + WMANA and orb.menu.combat:get() then
+			if player.mana > RMANA + EMANA + QMANA + WMANA and orb.menu.combat.key:get() then
 				player:castSpell("obj", 3, t)
 			end
 		end
-		if orb.menu.lane_clear:get() and menu.farm.spellFarm:get() and menu.farm.farmR:get() and common.GetPercentMana() > menu.farm.Mana:get() then
+		if orb.menu.lane_clear.key:get() and menu.farm.spellFarm:get() and menu.farm.farmR:get() and common.GetPercentMana() > menu.farm.Mana:get() then
 			local enemyMinionsR = common.GetMinionsInRange(spellR.range, TEAM_ENEMY)
 			for i, minion in pairs(enemyMinionsR) do
 				if minion and minion.path.count == 0 and not minion.isDead and common.IsValidTarget(minion) then
@@ -298,7 +298,7 @@ local function LogicR()
 			end
 		end
 	else
-		if orb.menu.lane_clear:get() and menu.farm.spellFarm:get() and menu.farm.farmR:get() then
+		if orb.menu.lane_clear.key:get() and menu.farm.spellFarm:get() and menu.farm.farmR:get() then
 			local allMinions = #common.GetMinionsInRange(spellR.width, TEAM_ENEMY, RMissile.pos)
 			local mobs = #common.GetMinionsInRange(spellR.width, TEAM_NEUTRAL, RMissile.pos)
 			if mobs > 0 then
@@ -321,7 +321,7 @@ local function LogicR()
 end
 
 local function farmE()
-	if orb.menu.lane_clear:get() and common.GetPercentMana() > menu.farm.Mana:get() and menu.farm.spellFarm:get() and menu.farm.farmE:get() and not orb.core.can_attack() then
+	if orb.menu.lane_clear.key:get() and common.GetPercentMana() > menu.farm.Mana:get() and menu.farm.spellFarm:get() and menu.farm.farmE:get() and not orb.core.can_attack() then
 		local enemyMinionsE = common.GetMinionsInRange(spellE.range, TEAM_ENEMY)
 		for i, minion in pairs(enemyMinionsE) do
 			if minion.health > common.CalculateAADamage(minion) and common.IsValidTarget(minion) then
@@ -350,12 +350,12 @@ local function LogicE()
 		if GetBuff(t,"chilled") or qCd > eCd - 1 and rCd > eCd - 1 then
 			if eDmg * 3 > common.GetShieldedHealth("AP", t) then
 				player:castSpell("obj", 2, t)
-			elseif orb.menu.combat:get() and (GetBuff(t,"chilled") or player.mana > RMANA + EMANA) then
+			elseif orb.menu.combat.key:get() and (GetBuff(t,"chilled") or player.mana > RMANA + EMANA) then
 				player:castSpell("obj", 2, t)
 			elseif Harass and player.mana > RMANA + EMANA + QMANA + WMANA and menu.harass["harass"..t.charName]:get() and UnderTurret() and QMissile == nil then
 				player:castSpell("obj", 2, t)
 			end
-		elseif orb.menu.combat:get() and player:spellSlot(3).state == 0 and player.mana  > RMANA + EMANA  and QMissile == nil then
+		elseif orb.menu.combat.key:get() and player:spellSlot(3).state == 0 and player.mana  > RMANA + EMANA  and QMissile == nil then
 			player:castSpell("obj", 3, t)
 		end
 	end
@@ -378,7 +378,7 @@ local function UseW(target)
 end
 
 local function LogicW()
-	if orb.menu.combat:get() and player.mana > RMANA + EMANA + WMANA then
+	if orb.menu.combat.key:get() and player.mana > RMANA + EMANA + WMANA then
 		local t = GetTargetW()
 		
 		if t == nil then return end
@@ -427,7 +427,7 @@ local function Gapcloser()
 end
 
 local function Jungle()
-	if orb.menu.lane_clear:get() then
+	if orb.menu.lane_clear.key:get() then
 		local mobs = common.GetMinionsInRange(spellR.range, TEAM_NEUTRAL)
 		if #mobs > 0 then
 			local mob = mobs[1] 
@@ -459,7 +459,7 @@ local function Jungle()
 end
 
 local function OnTick()
-	if orb.menu.combat:get() and menu.AACombo:get() then
+	if orb.menu.combat.key:get() and menu.AACombo:get() then
 		if player:spellSlot(2).state == 0 then
 			orb.core.set_server_pause_attack()
 		else
@@ -471,12 +471,12 @@ local function OnTick()
 	
 	Gapcloser()
 
-	None = not ( orb.menu.combat:get() or orb.menu.hybrid:get() or orb.menu.lane_clear:get() or  orb.menu.last_hit:get() )
+	None = not ( orb.menu.combat.key:get() or orb.menu.hybrid.key:get() or orb.menu.lane_clear.key:get() or  orb.menu.last_hit.key:get() )
 	
 	if menu.harassHybrid:get() then
-		Harass = orb.menu.hybrid:get()
+		Harass = orb.menu.hybrid.key:get()
 	else
-		Harass = orb.menu.hybrid:get() or orb.menu.lane_clear:get() or  orb.menu.last_hit:get()
+		Harass = orb.menu.hybrid.key:get() or orb.menu.lane_clear.key:get() or  orb.menu.last_hit.key:get()
 	end
 	
 	

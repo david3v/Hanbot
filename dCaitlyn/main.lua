@@ -128,7 +128,7 @@ end
 
 
 local function SetMana()
-	if (menu.manaDisable:get() and orb.menu.combat:get()) or common.GetPercentHealth() < 20 then
+	if (menu.manaDisable:get() and orb.menu.combat.key:get()) or common.GetPercentHealth() < 20 then
 		QMANA = 0
 		WMANA = 0
 		EMANA = 0
@@ -276,13 +276,13 @@ local function LogicQ()
 			if pos and pos.startPos:dist(pos.endPos) <= spellQ.range then
 				player:castSpell("pos", 0, vec3(pos.endPos.x, t.pos.y, pos.endPos.y))
 			end
-		elseif orb.menu.combat:get() and player.mana > RMANA + QMANA + EMANA + 10 and #common.GetEnemyHeroesInRange(bonusRange() + 100 + t.boundingRadius) == 0 and not menu.q.autoQ:get() then
+		elseif orb.menu.combat.key:get() and player.mana > RMANA + QMANA + EMANA + 10 and #common.GetEnemyHeroesInRange(bonusRange() + 100 + t.boundingRadius) == 0 and not menu.q.autoQ:get() then
 			local pos = preds.linear.get_prediction(spellQ, t)
 			if pos and pos.startPos:dist(pos.endPos) <= spellQ.range then
 				player:castSpell("pos", 0, vec3(pos.endPos.x, t.pos.y, pos.endPos.y))
 			end
 		end
-		if (orb.menu.combat:get() or Harass) and player.mana > RMANA + QMANA and #common.GetEnemyHeroesInRange(400) == 0 then
+		if (orb.menu.combat.key:get() or Harass) and player.mana > RMANA + QMANA and #common.GetEnemyHeroesInRange(400) == 0 then
 			local enemies = common.GetEnemyHeroes()
 			for i, enemy in ipairs(enemies) do
 				if common.IsValidTarget(enemy) and IsInRange(player,enemy,spellQ.range) and ( not common.CanPlayerMove(enemy) or enemy.buff["caitlynyordletrapinternal"] ) then
@@ -358,7 +358,7 @@ local function LogicW()
 			end	
 		end		
 
-		if orb.menu.combat:get() and menu.w.comboW:get() and player:spellSlot(1).stacks > 1 then
+		if orb.menu.combat.key:get() and menu.w.comboW:get() and player:spellSlot(1).stacks > 1 then
 			local enemies = common.GetEnemyHeroes()
 			for i, enemy in ipairs(enemies) do		
 				if common.IsValidTarget(enemy) and IsInRange(player,enemy,spellW.range - 100) then
@@ -398,7 +398,7 @@ local function LogicE()
 					if pos and not preds.collision.get_prediction(spellE, pos, t) and pos.startPos:dist(pos.endPos) <= spellE.range then
 						player:castSpell("pos", 2, vec3(pos.endPos.x, t.pos.y, pos.endPos.y))
 					end
-				elseif (Harass or orb.menu.combat:get()) and menu.e.harrasEQ:get() and player.mana > EMANA + QMANA + RMANA then
+				elseif (Harass or orb.menu.combat.key:get()) and menu.e.harrasEQ:get() and player.mana > EMANA + QMANA + RMANA then
 					local pos = preds.linear.get_prediction(spellE, t)
 					if pos and not preds.collision.get_prediction(spellE, pos, t) and pos.startPos:dist(pos.endPos) <= spellE.range then
 						player:castSpell("pos", 2, vec3(pos.endPos.x, t.pos.y, pos.endPos.y))
@@ -477,9 +477,9 @@ local function OnTick()
 	end
 	
 	if menu.harassHybrid:get() then
-		Harass = orb.menu.hybrid:get()
+		Harass = orb.menu.hybrid.key:get()
 	else
-		Harass = orb.menu.hybrid:get() or orb.menu.lane_clear:get() or  orb.menu.last_hit:get()
+		Harass = orb.menu.hybrid.key:get() or orb.menu.lane_clear.key:get() or  orb.menu.last_hit.key:get()
 	end
 
 	SetMana()
